@@ -59,9 +59,48 @@ def get_users():
 @app.route('/users/<int:id>', methods=['GET'])
 def get_user(id):
     user = db.session.get(User, id)
+
     if not user:
         return jsonify({"error": "User not found"}), 404
+    
     return user_schema.jsonify(user), 200
+
+# Update a User
+@app.route('/users/<int:id>', methods=['PUT'])
+def update_user(id):
+    user = db.session.get(User, id)
+
+    if not user:
+        return jsonify({"message": "Invalid user id"}), 400
+    
+    try:
+        user_data = user_schema.load(request.json)
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+    
+    if user_data["email"] != user.email:
+        existing_user = db.session.execute(select(User).filter_by(email = user_data["email"])).scalars().first()
+        if existing_user:
+            return jsonify({"error": "Email already exists!"}), 409
+
+    user.name = user_data['name']
+    user.email = user_data['email']
+    user.address = user_data['address']
+
+    db.session.commit()
+    return user_schema.jsonify(user), 200
+
+# Delete a User
+@app.route('/users/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    user = db.session.get(User, id)
+
+    if not user:
+        return jsonify({"message": "Invalid user id"}), 400
+    
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"message": f"succefully deleted user {id}"}), 200
 
 
 if __name__ == "__main__":
