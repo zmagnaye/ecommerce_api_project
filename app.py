@@ -102,6 +102,69 @@ def delete_user(id):
     db.session.commit()
     return jsonify({"message": f"succefully deleted user {id}"}), 200
 
+# Create a Product
+@app.route('/products', methods=['POST'])
+def create_product():
+    try:
+        product_data = product_schema.load(request.json)
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+    
+    new_product = Product(product_name = product_data['product_name'], price=product_data['price'])
+    db.session.add(new_product)
+    db.session.commit()
+
+    return product_schema.jsonify(new_product), 201
+
+# Get all Products
+@app.route('/products', methods=['GET'])
+def get_products():
+    query = select(Product)
+    products = db.session.execute(query).scalars().all()
+
+    return products_schema.jsonify(products), 200
+
+# Get Products by ID
+@app.route('/products/<int:id>', methods=['GET'])
+def get_product(id):
+    query = select(id).where(Product.id == id)
+    product = db.session.get(Product, id)
+
+    if product is None:
+        return jsonify({"error": "Product not found"}), 404
+
+    return product_schema.jsonify(product), 200
+
+# Update a Product
+@app.route('/products/<int:id>', methods=['PUT'])
+def update_product(id):
+    product = db.session.get(Product, id)
+
+    if not product:
+        return jsonify({"message": "Product not Found"}), 400
+    
+    try:
+        product_data = product_schema.load(request.json)
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+    
+    product.product_name = product_data['product_name']
+    product.price = product_data['price']
+
+    db.session.commit()
+    return product_schema.jsonify(product), 200
+
+# Delete a Product
+@app.route('/products/<int:id>', methods=['DELETE'])
+def delete_product(id):
+    product = db.session.get(Product, id)
+
+    if not product:
+        return jsonify({"message": "Invalid product id"}), 400
+    
+    db.session.delete(product)
+    db.session.commit()
+    return jsonify({"message": f"succefully deleted product {id}"}), 200
 
 if __name__ == "__main__":
     with app.app_context():
