@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow import ValidationError
+from sqlalchemy import select
 from config import db, ma
 # from models.base import Base
 from models.user import User
@@ -28,6 +29,7 @@ order_schema = OrderSchema()
 orders_schema = OrderSchema(many = True)
 
 # Routes
+# Create New Users
 @app.route('/users', methods=['POST'])
 def create_user():
     try:
@@ -44,6 +46,22 @@ def create_user():
     db.session.commit()
 
     return user_schema.jsonify(new_user), 201
+
+# Fetch All Users
+@app.route('/users', methods=['GET'])
+def get_users():
+    query = select(User)
+    users = db.session.execute(query).scalars().all()
+
+    return users_schema.jsonify(users), 200
+
+# Fetch a Single User by ID
+@app.route('/users/<int:id>', methods=['GET'])
+def get_user(id):
+    user = db.session.get(User, id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    return user_schema.jsonify(user), 200
 
 
 if __name__ == "__main__":
