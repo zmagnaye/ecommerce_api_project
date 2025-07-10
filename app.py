@@ -236,6 +236,12 @@ def get_user_orders(user_id):
     return orders_schema.jsonify(user.orders), 200
 
 # Get all products from an order
+@app.route('/orders/<int:order_id>/products', methods=['GET'])
+def get_order_products(order_id):
+    order = db.session.get(Order, order_id)
+    if not order:
+        return jsonify({"error": "Order not found."}), 400
+    return products_schema.jsonify(order.products), 200
 
 if __name__ == "__main__":
     with app.app_context():
