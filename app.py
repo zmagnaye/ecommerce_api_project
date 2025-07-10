@@ -210,6 +210,23 @@ def add_product_to_order(order_id, product_id):
 
     return jsonify({"message": f"Product {product.product_name} added to order {order_id}"}), 200
 
+# Remove a Product from Order
+@app.route('/orders/<int:order_id>/remove_product/<int:product_id>', methods=['DELETE'])
+def remove_product_to_order(order_id, product_id):
+    order = db.session.get(Order, order_id)
+    product = db.session.get(Product, product_id)
+
+    if not order or not product:
+        return jsonify({"error": "Order or Product not found."}), 400
+    
+    if product not in order.products:
+        return jsonify({"error": "Product not in order."}), 400
+    
+    order.products.remove(product)
+    db.session.commit()
+
+    return jsonify({"message": f"Product {product.product_name} removed to order {order_id}"}), 200
+
 if __name__ == "__main__":
     with app.app_context():
         print("base.metadata") 
