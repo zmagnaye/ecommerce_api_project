@@ -4,6 +4,7 @@ from flask_marshmallow import Marshmallow
 from marshmallow import ValidationError
 from sqlalchemy import select
 from config import db, ma
+from datetime import datetime
 # from models.base import Base
 from models.user import User
 from models.product import Product
@@ -165,6 +166,33 @@ def delete_product(id):
     db.session.delete(product)
     db.session.commit()
     return jsonify({"message": f"succefully deleted product {id}"}), 200
+
+# Create Order
+@app.route('/orders', methods=['POST'])
+def create_order():
+    order_data = request.json
+
+    user_id = order_data.get("user_id")
+    order_date = order_data.get("order_date")
+
+    if not user_id:
+        return jsonify({"error": "User ID is required"}), 400
+        
+    if order_date:
+        try:
+            order_date = datetime.strptime(order_date, "%Y-%m-%d")
+        except ValueError:
+           return jsonify({"error": "Order Date must be in YYYY-MM-DD format"}), 400
+    else:
+        order_date = datetime.utcnow()
+       
+    new_order = Order(user_id = user_id, order_date = order_date)
+    db.session.add(new_order)
+    db.session.commit()
+
+    return order_schema.jsonify(new_order), 201
+
+
 
 if __name__ == "__main__":
     with app.app_context():
