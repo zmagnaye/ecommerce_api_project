@@ -192,7 +192,23 @@ def create_order():
 
     return order_schema.jsonify(new_order), 201
 
+# Add a Product to an Order (Duplicate Prevention)
+@app.route('/orders/<int:order_id>/add_product/<int:product_id>', methods=['PUT'])
+def add_product_to_order(order_id, product_id):
+    order = db.session.get(Order, order_id)
+    product = db.session.get(Product, product_id)
 
+    if not order or not product:
+        return jsonify({"error": "Order or Product not found."}), 400
+    
+    # Avoid duplicates
+    if product in order.products:
+        return jsonify({"error": "Product already in order."}), 400
+    
+    order.products.append(product)
+    db.session.commit()
+
+    return jsonify({"message": f"Product {product.product_name} added to order {order_id}"}), 200
 
 if __name__ == "__main__":
     with app.app_context():
@@ -200,6 +216,5 @@ if __name__ == "__main__":
         from models.base import Base
         Base.metadata.create_all(db.engine)
         # db.create_all()
-        print("tables created") 
 
     app.run(debug=True)
