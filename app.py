@@ -227,6 +227,16 @@ def remove_product_to_order(order_id, product_id):
 
     return jsonify({"message": f"Product {product.product_name} removed to order {order_id}"}), 200
 
+# Get all orders from user
+@app.route('/users/<int:user_id>/orders', methods=['GET'])
+def get_user_orders(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 400
+    return orders_schema.jsonify(user.orders), 200
+
+# Get all products from an order
+
 if __name__ == "__main__":
     with app.app_context():
         print("base.metadata") 
